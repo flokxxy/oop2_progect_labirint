@@ -1,0 +1,5 @@
+/Applications/CLion.app/Contents/bin/cmake/mac/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=/Applications/CLion.app/Contents/bin/ninja/mac/ninja -G Ninja -S /Users/viktoria/CLionProjects/Progect_Labirint -B /Users/viktoria/CLionProjects/Progect_Labirint/cmake-build-debug
+-- Found SFML 2.6.2 in /opt/homebrew/lib/cmake/SFML
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /Users/viktoria/CLionProjects/Progect_Labirint/cmake-build-debug
