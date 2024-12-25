@@ -4,7 +4,7 @@
 
 #ifndef PROGECT_LABIRINT_GAME_H
 #define PROGECT_LABIRINT_GAME_H
-#include <SFML/Graphics.hpp>
+
 
 #include "Labirint.h"
 #include "Robot.h"

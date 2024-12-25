@@ -3,7 +3,7 @@
 #include <ctime>
 #include <iostream>
 
-#include <SFML/Graphics.hpp>
+
 
 using namespace std;
 
@@ -64,7 +64,9 @@ void Game::startGame() {
     // Основной игровой цикл
     char input;
     while (true) {
-        system("clear");
+        system("cls");
+
+       // system("clear");
         labirint.print(); // Печать лабиринта
         cout << "Enter command (W/A/S/D to move, Q to quit): ";
         cin >> input;

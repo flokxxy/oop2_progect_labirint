@@ -1,7 +1,7 @@
 #include <iostream>
 #include "Game.h"
 
-#include <SFML/Graphics.hpp>
+
 
 using namespace std;
 

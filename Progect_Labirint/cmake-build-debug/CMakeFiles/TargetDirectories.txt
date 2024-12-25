@@ -1,3 +1,3 @@
-/Users/viktoria/CLionProjects/Progect_Labirint/cmake-build-debug/CMakeFiles/Progect_Labirint.dir
-/Users/viktoria/CLionProjects/Progect_Labirint/cmake-build-debug/CMakeFiles/edit_cache.dir
-/Users/viktoria/CLionProjects/Progect_Labirint/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+D:/GitHub/oop2_progect/Progect_Labirint/cmake-build-debug/CMakeFiles/Progect_Labirint.dir
+D:/GitHub/oop2_progect/Progect_Labirint/cmake-build-debug/CMakeFiles/edit_cache.dir
+D:/GitHub/oop2_progect/Progect_Labirint/cmake-build-debug/CMakeFiles/rebuild_cache.dir
