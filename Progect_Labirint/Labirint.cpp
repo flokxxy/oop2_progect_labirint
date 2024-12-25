@@ -11,6 +11,7 @@ Labirint::Labirint(int rows, int cols, int numItems) : rows(rows), cols(cols) {
     generate();
 }
 
+
 void Labirint::generate() {
     const unsigned int MAX_ATTEMPTS = 10;
     bool success = false;
