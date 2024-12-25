@@ -7,7 +7,7 @@
 
 class Labirint {
 private:
-    int rows, cols;
+    int rows, cols, numItems;
     std::vector<std::vector<char>> grid;
 
     void generate(); // Основной метод генерации
@@ -18,6 +18,11 @@ private:
 
 
 public:
+
+    void placeItems(int numItems); // Метод для размещения предметов
+    int getRows() const { return rows; }
+    int getCols() const { return cols; }
+
     Labirint(int rows, int cols, int numItems);
     void print() const;
     char getCell(int x, int y) const;
@@ -29,6 +34,9 @@ public:
 
 
     bool hasPathToExit() const; // Проверяет, существует ли путь от входа к выходу
+    bool isExit(int x, int y) const; // Проверяет, является ли клетка выходом
+    bool checkRobotAtExit(int robotX, int robotY) const; // Проверяет, находится ли робот на выходе
+
 
 
 };
