@@ -9,8 +9,11 @@
 Labirint::Labirint(int rows, int cols, int numItems) : rows(rows), cols(cols) {
     grid.resize(rows, std::vector<char>(cols, '#'));
     generate();
-}
 
+    auto [exitRow, exitCol] = getExit();
+    std::cout << "Exit is at (" << exitRow << ", " << exitCol << ")\n";
+
+}
 
 void Labirint::generate() {
     const unsigned int MAX_ATTEMPTS = 10;
@@ -145,12 +148,14 @@ bool Labirint::isWall(int x, int y) const {
     }
     return grid[x][y] == '#';
 }
+
 std::pair<int, int> Labirint::getExit() const {
     for (int col = 0; col < cols; ++col) {
         if (grid[rows - 1][col] == 'I') {
             return {rows - 1, col}; // Координаты выхода
         }
     }
+    std::cerr << "Exit not found!\n";
     return {-1, -1}; // Если выход не найден
 }
 
@@ -211,6 +216,18 @@ bool Labirint::hasPathToExit() const {
     return false; // Пути нет
 }
 
+bool Labirint::isExit(int x, int y) const {
+    return getCell(x, y) == 'I';
+}
+
+bool Labirint::checkRobotAtExit(int robotX, int robotY) const {
+    auto [exitRow, exitCol] = getExit();
+    if (robotX == exitRow && robotY == exitCol) {
+        std::cout << "Congratulations! You found the exit!\n";
+        return true;
+    }
+    return false;
+}
 
 
 void Labirint::print() const {
