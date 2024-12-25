@@ -6,7 +6,7 @@
 #include <cstdlib>
 #include <vector>
 
-Labirint::Labirint(int rows, int cols, int numItems) : rows(rows), cols(cols) {
+Labirint::Labirint(int rows, int cols, int numItems) : rows(rows), cols(cols), numItems(numItems) {
     grid.resize(rows, std::vector<char>(cols, '#'));
     generate();
 
@@ -49,6 +49,8 @@ void Labirint::generate() {
     if (!success) {
         std::cerr << "Не удалось сгенерировать лабиринт с путём.\n";
     }
+    //размещение предметов
+    placeItems(numItems);
 }
 
 void Labirint::generateWithEller() {
@@ -228,6 +230,21 @@ bool Labirint::checkRobotAtExit(int robotX, int robotY) const {
     }
     return false;
 }
+
+void Labirint::placeItems(int numItems) {
+    srand(time(nullptr));
+    int placed = 0;
+    while (placed < numItems) {
+        int x = rand() % rows;
+        int y = rand() % cols;
+        if (grid[x][y] == '.') { // Только на пустые клетки
+            grid[x][y] = 'P';
+            placed++;
+            std::cout << "\033[34mItem placed at (" << x << ", " << y << ").\033[0m\n"; // Отладочное сообщение
+        }
+    }
+}
+
 
 
 void Labirint::print() const {
