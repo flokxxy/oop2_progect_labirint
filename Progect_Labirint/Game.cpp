@@ -264,6 +264,9 @@ void Game::checkWinCondition() {
      */
     if (robotX == exitX && robotY == exitY) {
         gameMessages.push_back("\033[32m[GAME OVER] Congratulations! You successfully escaped the labyrinth!\033[0m");
+        //exit(0);
+        std::cout << "\n\033[32m[GAME OVER] Congratulations! You successfully escaped the labyrinth!\033[0m\n";
+        std::this_thread::sleep_for(std::chrono::seconds(2)); // Даем 2 секунды на отображение
         exit(0);
     }
 }
