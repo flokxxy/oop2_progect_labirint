@@ -2,10 +2,33 @@
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
+#include <vector>
+#include <string>
+#include <chrono>
+#include <thread>
 
-#include <SFML/Graphics.hpp>
+#include <termios.h>
+#include <unistd.h>
 
 using namespace std;
+
+std::vector<std::string> activeEffects; // для удобства отображения активных предметов
+std::vector<std::string> errorMessages; // для удобства отображения сообщений
+std::vector<std::string> gameMessages;
+
+//ф-ия для того чтобы двигаться без enter
+char getCharInput() {
+    struct termios oldt, newt;
+    char ch;
+    tcgetattr(STDIN_FILENO, &oldt);          // Получаем текущие настройки терминала
+    newt = oldt;
+    newt.c_lflag &= ~(ICANON | ECHO);        // Отключаем канонический ввод и эхо
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt); // Устанавливаем новые настройки
+    ch = getchar();                          // Считываем символ
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt); // Восстанавливаем старые настройки
+    return ch;
+}
+
 
 Game::Game(int rows, int cols, int numItems)
         : labirint(rows, cols, numItems),
@@ -89,9 +112,10 @@ Game::Game(int rows, int cols, int numItems)
         while (true) {
             system("clear");
             updateGameState();
-            labirint.print(); // Печать лабиринта
             cout << "Enter command (W/A/S/D to move, Q to quit): ";
-            cin >> input;
+            //cin >> input;
+
+            input = getCharInput(); // подключение ходьбы без
 
             if (input == 'Q' || input == 'q') {
                 cout << "Exiting the game. Goodbye!\n";
@@ -99,20 +123,8 @@ Game::Game(int rows, int cols, int numItems)
             }
 
             processInput(input);
-            updateGameState();
+            //updateGameState();
 
-            if (checkCollision()) {
-                if (swordActive) {
-                    cout << "You used the sword to destroy the Minotaur!\n";
-                    exit(0); // Завершаем игру победой
-                } else if (shieldTurns > 0) {
-                    cout << "The Minotaur attacked, but your shield protected you!\n";
-                    shieldTurns--;
-                } else {
-                    cout << "\033[31mGame over! The Minotaur caught the robot. \033[0m \n";
-                    break;
-                }
-            }
 
             checkWinCondition();
         }
@@ -146,7 +158,6 @@ Game::Game(int rows, int cols, int numItems)
         checkWinCondition();
     }
 
-
 void Game::moveRobot(char direction) {
     int newX = robotX;
     int newY = robotY;
@@ -160,7 +171,7 @@ void Game::moveRobot(char direction) {
 
     if (!labirint.isWall(newX, newY) || hammerTurns > 0) {
         if (labirint.isWall(newX, newY)) {
-            std::cout << "\033[33mYou used the hammer to break through the wall!\033[0m\n";
+            gameMessages.push_back ("\033[33mYou used the hammer to break through the wall!\033[0m\n");
             hammerTurns--;
         }
         labirint.setCell(robotX, robotY, '.'); // Убираем старую позицию
@@ -169,35 +180,47 @@ void Game::moveRobot(char direction) {
         char cell = labirint.getCell(robotX, robotY);
 
         if (cell == 'P') {
-            std::cout << "Robot stepped on an item.\n"; // Отладочный вывод
             handleItem(robotX, robotY);
         }
 
         labirint.setCell(robotX, robotY, 'R'); // Обновляем новую позицию
     } else {
-        std::cout << "\033[31mCannot move into a wall!\033[0m\n";
+        errorMessages.push_back("\033[31m[ERROR] You hit a wall?????!\033[0m");
     }
 }
 
-
 void Game::moveMinotaur() {
-        int direction = rand() % 4; // 0: up, 1: down, 2: left, 3: right
-        int newX = minotaurX;
-        int newY = minotaurY;
+    int dx = robotX - minotaurX;  // Разница по X
+    int dy = robotY - minotaurY;  // Разница по Y
+    int absDx = abs(dx);
+    int absDy = abs(dy);
+
+    // Если робот в радиусе 3 клеток, идем к нему
+    if (absDx <= 3 && absDy <= 3) {
+        if (absDx > absDy) { // Двигаемся в сторону, где больше разница
+            if (dx > 0 && !labirint.isWall(minotaurX + 1, minotaurY)) {
+                minotaurX++;
+            } else if (dx < 0 && !labirint.isWall(minotaurX - 1, minotaurY)) {
+                minotaurX--;
+            }
+        } else {
+            if (dy > 0 && !labirint.isWall(minotaurX, minotaurY + 1)) {
+                minotaurY++;
+            } else if (dy < 0 && !labirint.isWall(minotaurX, minotaurY - 1)) {
+                minotaurY--;
+            }
+        }
+    }
+        //Если робот далеко, ходим случайно
+    else {
+        int direction = rand() % 4;
+        int newX = minotaurX, newY = minotaurY;
 
         switch (direction) {
-            case 0:
-                newX--;
-                break;
-            case 1:
-                newX++;
-                break;
-            case 2:
-                newY--;
-                break;
-            case 3:
-                newY++;
-                break;
+            case 0: newX--; break; // Вверх
+            case 1: newX++; break; // Вниз
+            case 2: newY--; break; // Влево
+            case 3: newY++; break; // Вправо
         }
 
         if (!labirint.isWall(newX, newY)) {
@@ -205,39 +228,32 @@ void Game::moveMinotaur() {
             minotaurY = newY;
         }
     }
-
-    bool Game::checkCollision() {
-        return (robotX == minotaurX && robotY == minotaurY);
-    }
-
-void Game::handleItem(int x, int y) {
-    char item = labirint.getCell(x, y);
-    if (item == 'P') {
-        int effect = rand() % 4; // Случайный выбор эффекта: 0 - меч, 1 - щит, 2 - молот, 3 - туман
-        switch (effect) {
-            case 0: // Меч
-                std::cout << "\033[33mYou found a sword! You can destroy the Minotaur if you collide with it.\033[0m\n";
-                swordActive = true;
-                swordTurns = 3;
-                break;
-            case 1: // Щит
-                std::cout << "\033[34mYou found a shield! You are protected from the Minotaur for 3 turns.\033[0m\n";
-                shieldTurns = 3;
-                break;
-            case 2: // Молот
-                std::cout << "\033[35mYou found a hammer! You can break through walls for 3 turns.\033[0m\n";
-                hammerTurns = 3;
-                break;
-            case 3: // Туман войны
-                std::cout << "\033[36mYou found the Fog of War! Your visibility is reduced to a 3x3 grid for 3 turns.\033[0m\n";
-                fogTurns = 3;
-                break;
-        }
-        labirint.setCell(x, y, '.'); // Удаляем предмет с поля
-    }
 }
 
+bool Game::checkCollision() {
+    if (robotX == minotaurX && robotY == minotaurY) {
+        if (shieldTurns > 0) {
+            gameMessages.push_back("\033[34m[SHIELD] The Minotaur attacked, but your shield protected you!\033[0m");
+            shieldTurns--;
+            return false;
+        } else if (swordActive) {
+            gameMessages.push_back("\033[33m[VICTORY] You used the sword to destroy the Minotaur!\033[0m\n");
 
+            // Вывод сообщения перед завершением игры
+            std::cout << "\n\033[33m[VICTORY] You used the sword to destroy the Minotaur!\033[0m\n";
+            std::this_thread::sleep_for(std::chrono::seconds(2)); // Даем 2 секунды на отображение
+            exit(0);
+        } else {
+            gameMessages.push_back("\033[31m[DEATH] Game over! The Minotaur caught you.\033[0m");
+
+            // Вывод сообщения перед завершением игры
+            std::cout << "\n\033[31m[DEATH] Game over! The Minotaur caught you.\033[0m\n";
+            std::this_thread::sleep_for(std::chrono::seconds(2)); // Даем 2 секунды на отображение
+            exit(0);
+        }
+    }
+    return false;
+}
 
 
 void Game::checkWinCondition() {
@@ -247,76 +263,144 @@ void Game::checkWinCondition() {
     std::cout << "Exit position: (" << exitX << ", " << exitY << ")\n"; // Диагностика
      */
     if (robotX == exitX && robotY == exitY) {
-        std::cout << "\033[32mCongratulations! You successfully escaped the labyrinth!\033[0m\n";
-        exit(0); // Завершаем игру
+        gameMessages.push_back("\033[32m[GAME OVER] Congratulations! You successfully escaped the labyrinth!\033[0m");
+        exit(0);
+    }
+}
+
+//присутствует таймер действия предметов
+void Game::handleItem(int x, int y) {
+    char item = labirint.getCell(x, y);
+    if (item == 'P') {
+        int effect = rand() % 4;
+        switch (effect) {
+            case 0: // Меч
+                swordActive = true;
+                swordTurns = 3;
+                activeEffects.push_back("\033[33m[Sword] You can destroy the Minotaur! (" + std::to_string(swordTurns) + " turns left)\033[0m");
+                break;
+            case 1: // Щит
+                shieldTurns = 3;
+                activeEffects.push_back("\033[34m[Shield] You are protected from Minotaur! (" + std::to_string(shieldTurns) + " turns left)\033[0m");
+                break;
+            case 2: // Молот
+                hammerTurns = 3;
+                activeEffects.push_back("\033[35m[Hammer] You can break walls! (" + std::to_string(hammerTurns) + " turns left)\033[0m");
+                break;
+            case 3: // Туман
+                fogTurns = 3;
+                activeEffects.push_back("\033[36m[Fog] Visibility reduced to 3x3! (" + std::to_string(fogTurns) + " turns left)\033[0m");
+                break;
+        }
+        labirint.setCell(x, y, '.'); // Удаляем предмет с карты
     }
 }
 
 
-    void Game::updateGameState() {
 
-        checkWinCondition();
-        // Убираем старые позиции
-        labirint.setCell(robotX, robotY, '.');
-        labirint.setCell(minotaurX, minotaurY, '.');
+void Game::updateGameState() {
+    labirint.setCell(robotX, robotY, '.');
+    labirint.setCell(minotaurX, minotaurY, '.');
 
-        // Двигаем Минотавра
-        moveMinotaur();
+    moveMinotaur();
 
-        // Устанавливаем новые позиции
-        labirint.setCell(robotX, robotY, 'R');
-        labirint.setCell(minotaurX, minotaurY, 'M');
+    labirint.setCell(robotX, robotY, 'R');
+    labirint.setCell(minotaurX, minotaurY, 'M');
 
-        // Проверка: находится ли робот на выходе
-        if (labirint.checkRobotAtExit(robotX, robotY)) {
-            std::cout << "Congratulations! You successfully escaped the labyrinth!\n";
-            exit(0); // Завершаем игру
+    if (swordTurns > 0) swordTurns--;
+    if (shieldTurns > 0) shieldTurns--;
+    if (hammerTurns > 0) hammerTurns--;
+    if (fogTurns > 0) {
+        displayFog();
+        fogTurns--;
+    } else {
+        labirint.print();
+    }
+
+    // Проверка: находится ли робот на выходе
+    if (labirint.checkRobotAtExit(robotX, robotY)) {
+        gameMessages.push_back("\033[33m[VICTORY]Congratulations! You successfully escaped the labyrinth!\033[0m");
+        exit(0); // Завершаем игру
+    }
+
+    if (checkCollision()) {
+        gameMessages.push_back("\033[31m[DEATH] The Minotaur caught you! You have been killed!\033[0m");
+        return; // Если игра окончена, дальше ничего не делаем
+    }
+
+    // Вывод заголовка сообщений
+    cout << "\n\033[32m===  MESSAGES  ===\033[0m\n";
+
+    if (gameMessages.empty()) {
+        std::cout << "No messages.\n";
+    } else {
+        for (const auto& msg : gameMessages) {
+            std::cout << msg << "\n";
         }
+    }
+    gameMessages.clear();
 
-        // Уменьшаем длительность эффектов
-        if (swordTurns > 0) swordTurns--;
-        if (shieldTurns > 0) shieldTurns--;
-        if (hammerTurns > 0) hammerTurns--;
-        if (fogTurns > 0) fogTurns--;
-        // Логика отображения тумана войны (если требуется)
-        if (fogTurns > 0) {
-            std::cout << "\033[35mFog of war is active! Your visibility is limited.\033[0m\n";
-            displayFog();
+    // Обновляем таймер эффектов и удаляем истекшие
+    for (auto it = activeEffects.begin(); it != activeEffects.end(); ) {
+        if (it->find("[Sword]") != std::string::npos && --swordTurns <= 0) {
+            it = activeEffects.erase(it);
+        } else if (it->find("[Shield]") != std::string::npos && --shieldTurns <= 0) {
+            it = activeEffects.erase(it);
+        } else if (it->find("[Hammer]") != std::string::npos && --hammerTurns <= 0) {
+            it = activeEffects.erase(it);
+        } else if (it->find("[Fog]") != std::string::npos && --fogTurns <= 0) {
+            it = activeEffects.erase(it);
+        } else {
+            ++it;
         }
     }
 
+    // Выводим все активные эффекты
+    std::cout << "\n\033[32m=== ACTIVE EFFECTS ===\033[0m\n";
+    if (activeEffects.empty()) {
+        std::cout << "No active effects.\n";
+    } else {
+        for (const auto& effect : activeEffects) {
+            std::cout << effect << "\n";
+        }
+    }
+
+    // Выводим ошибки
+    if (!errorMessages.empty()) {
+        std::cout << "\n\033[31m=== ERROR MESSAGES ===\033[0m\n";
+        for (const auto& error : errorMessages) {
+            std::cout << error << "\n";
+        }
+        errorMessages.clear(); // Очищаем ошибки перед следующим шагом
+    }
+}
 
 void Game::displayFog() {
-    int fogRadius = 1; // Радиус тумана
-    for (int i = robotX - fogRadius; i <= robotX + fogRadius; ++i) {
-        for (int j = robotY - fogRadius; j <= robotY + fogRadius; ++j) {
-            if (i >= 0 && i < labirint.getRows() && j >= 0 && j < labirint.getCols()) {
-                std::cout << labirint.getCell(i, j);
-            } else {
-                std::cout << '#'; // За границей лабиринта
+    int fogRadius = 1;
+
+    for (int i = 0; i < labirint.getRows(); ++i) {
+        for (int j = 0; j < labirint.getCols(); ++j) {
+            if (i == 0 || i == labirint.getRows() - 1 || j == 0 || j == labirint.getCols() - 1) {
+                std::cout << "#";
+            }
+            else if (std::abs(i - robotX) <= fogRadius && std::abs(j - robotY) <= fogRadius) {
+                char cell = labirint.getCell(i, j);
+
+                if (cell == 'R') {
+                    std::cout << "\033[32mR\033[0m"; // Зеленый робот
+                } else if (cell == 'M') {
+                    std::cout << "\033[31mM\033[0m"; // Красный минотавр
+                } else if (cell == 'P') {
+                    std::cout << "\033[34mP\033[0m"; // Синий предмет
+                } else {
+                    std::cout << cell;
+                }
+            }
+                else {
+                std::cout << " ";
             }
         }
         std::cout << "\n";
     }
 }
-
-
-void Game::renderLabirint() {
-    if (fogTurns > 0) {
-        std::cout << "\033[36mFog of War active! Visibility reduced.\033[0m\n";
-        for (int i = robotX - 1; i <= robotX + 1; i++) {
-            for (int j = robotY - 1; j <= robotY + 1; j++) {
-                if (i >= 0 && i < labirint.getRows() && j >= 0 && j < labirint.getCols()) {
-                    std::cout << labirint.getCell(i, j);
-                } else {
-                    std::cout << '#'; // Граница видимости
-                }
-            }
-            std::cout << '\n';
-        }
-    } else {
-        labirint.print();
-    }
-}
-
 
