@@ -5,17 +5,54 @@
 #include <string>
 #include <utility>
 
+/**
+ * @class Labirint
+ * @brief Класс для представления лабиринта и его функциональности.
+ *
+ * Этот класс предоставляет все необходимые методы для создания лабиринта, генерации его структуры,
+ * размещения предметов, проверки путей и взаимодействия с элементами лабиринта.
+ */
+
 class Labirint {
 private:
-    int rows, cols, numItems;
-    std::vector<std::vector<char>> grid;
+    int rows, cols, numItems; //Количество строк, столбцов и предметов в лабиринте
+    std::vector<std::vector<char>> grid; ///< Двумерная сетка для представления лабиринта
 
-    void generate(); // Основной метод генерации
-    void generateWithEller(); // Генерация алгоритмом Эллера
+
+    void generate(); // Генерация лабиринта с использованием алгоритма.
+    /**
+     * Этот метод используется для основной генерации лабиринта, вызывая соответствующий алгоритм
+     * для построения структуры лабиринта.
+     */
+    void generateWithEller(); // Генерация лабиринта с использованием алгоритма Эллера.
+    /**
+    * Алгоритм Эллера используется для создания лабиринта с более сложной структурой и без
+    * мертвых концов.
+    */
     void createSemicircle(unsigned int centerRow, unsigned int centerCol,
-                          unsigned int radius, bool topHalf);
-    bool isPathExists(unsigned int sr, unsigned int sc, unsigned int er, unsigned int ec); // Проверка пути
+                          unsigned int radius, bool topHalf); //Создание полуокружности на сетке.
+    /**
+    * Этот метод создает полуокружность (верхнюю или нижнюю) на лабиринте, чтобы создать
+    * препятствия или пути.
+    *
+    * @param centerRow Центр окружности по строкам
+    * @param centerCol Центр окружности по столбцам
+    * @param radius Радиус полуокружности
+    * @param topHalf Если true, создается верхняя половина, если false — нижняя
+    */
 
+    bool isPathExists(unsigned int sr, unsigned int sc, unsigned int er, unsigned int ec);
+    //Проверка существования пути между двумя клетками.
+    /**
+       * Этот метод проверяет, существует ли путь между двумя клетками лабиринта, используя
+       * алгоритм поиска в глубину (или аналогичный метод).
+       *
+       * @param sr Начальная строка
+       * @param sc Начальный столбец
+       * @param er Конечная строка
+       * @param ec Конечный столбец
+       * @return true, если путь существует; false, если нет
+       */
 
 public:
 
@@ -23,19 +60,64 @@ public:
     int getRows() const { return rows; }
     int getCols() const { return cols; }
 
-    Labirint(int rows, int cols, int numItems);
-    void print() const;
-    char getCell(int x, int y) const;
-    void setCell(int x, int y, char value);
+    Labirint(int rows, int cols, int numItems); //Конструктор лабиринта.
+    /**
+    * Создает лабиринт с указанным числом строк, столбцов и предметов.
+    *
+    * @param rows Количество строк
+    * @param cols Количество столбцов
+    * @param numItems Количество предметов, которые будут размещены в лабиринте
+    */
+
+    void print() const;//Печать лабиринта.
+    //Выводит на экран текущую сетку лабиринта.
+
+    char getCell(int x, int y) const;//Получить символ, находящийся в клетке.
+    /**
+     * Этот метод возвращает символ, который находится в конкретной клетке лабиринта,
+     * будь то стена, путь, предмет или персонаж.
+     *
+     * @param x Строка клетки
+     * @param y Столбец клетки
+     * @return Символ, находящийся в клетке
+     */
+
+    void setCell(int x, int y, char value); //Установить значение в клетке.
+    /**
+     * Этот метод устанавливает заданный символ в клетке лабиринта.
+     *
+     * @param x Строка клетки
+     * @param y Столбец клетки
+     * @param value Символ, который будет установлен в клетке
+     */
 
     int getEntranceColumn() const; // Возвращает колонку входа
-    bool isWall(int x, int y) const; // Проверяет, является ли клетка стеной
-    std::pair<int, int> getExit() const; // Возвращает координаты выхода
+    /**
+     * Этот метод возвращает столбец, в котором расположен вход в лабиринт.
+     *
+     * @return Столбец входа
+     */
 
+    bool isWall(int x, int y) const; // Проверяет, является ли клетка стеной
+    /**
+   * Этот метод проверяет, является ли указанная клетка стеной в лабиринте.
+   *
+   * @param x Строка клетки
+   * @param y Столбец клетки
+   * @return true, если клетка является стеной; false в противном случае
+   */
+
+    std::pair<int, int> getExit() const; // Возвращает координаты выхода
+    //тот метод возвращает координаты (строку и столбец) выхода из лабиринта.
+
+    bool checkRobotAtExit(int robotX, int robotY) const; // Проверяет, находится ли робот на выходе
+    //Этот метод проверяет, находится ли робот в клетке, которая является выходом из лабиринта.
 
     bool hasPathToExit() const; // Проверяет, существует ли путь от входа к выходу
     bool isExit(int x, int y) const; // Проверяет, является ли клетка выходом
-    bool checkRobotAtExit(int robotX, int robotY) const; // Проверяет, находится ли робот на выходе
+
+
+
 
 
 
